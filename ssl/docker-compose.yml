@@ -1,0 +1,10 @@
+version: "3.8"
+ 
+services:
+  certs-maker:
+    image: soulteary/certs-maker
+    environment:
+      - CERT_CN=dev.io
+      - CERT_DNS=dev.io;*.dev.io
+    volumes:
+      - ./certs:/ssl

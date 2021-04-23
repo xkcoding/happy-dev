@@ -1,0 +1,112 @@
+version: "3.8"
+services:
+  traefik:
+    image: traefik:v2.4.0
+    restart: unless-stopped
+    ports:
+      - 127.0.0.1:80:80
+      - 127.0.0.1:443:443
+    networks:
+      - traefik
+    command:
+      - "--global.sendanonymoususage=false"
+      - "--global.checknewversion=false"
+      - "--entrypoints.http.address=:80"
+      - "--entrypoints.https.address=:443"
+      - "--api=true"
+      - "--api.insecure=true"
+      - "--api.dashboard=true"
+      - "--api.debug=false"
+      - "--ping=true"
+      - "--log.level=DEBUG"
+      - "--log.format=common"
+      - "--accesslog=false"
+      - "--providers.docker=true"
+      - "--providers.docker.watch=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.docker.endpoint=unix:///var/run/docker.sock"
+      - "--providers.docker.swarmMode=false"
+      - "--providers.docker.useBindPortIP=false"
+      - "--providers.docker.network=traefik"
+      - "--providers.file=true"
+      - "--providers.file.watch=true"
+      - "--providers.file.directory=/etc/traefik/config"
+      - "--providers.file.debugloggeneratedtemplate=true"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./certs/:/data/ssl/:ro
+      - ./logs:/data/logs:rw
+      - ./config/:/etc/traefik/config/:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik"
+      # default request forwarding https port
+      - "traefik.http.routers.traefik-dash-default.middlewares=https-redirect@file"
+      - "traefik.http.routers.traefik-dash-default.entrypoints=http"
+      - "traefik.http.routers.traefik-dash-default.rule=Host(`dashboard.dev.io`)"
+      - "traefik.http.routers.traefik-dash-default.service=dashboard@internal"
+      # handle dashboard
+      - "traefik.http.routers.traefik-dash-web.entrypoints=https"
+      - "traefik.http.routers.traefik-dash-web.rule=Host(`dashboard.dev.io`) && PathPrefix(`/`)"
+      - "traefik.http.routers.traefik-dash-web.tls=true"
+      - "traefik.http.routers.traefik-dash-web.service=dashboard@internal"
+      # handle api
+      - "traefik.http.routers.traefik-dash-api.entrypoints=https"
+      - "traefik.http.routers.traefik-dash-api.rule=Host(`dashboard.dev.io`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
+      - "traefik.http.routers.traefik-dash-api.tls=true"
+      - "traefik.http.routers.traefik-dash-api.service=api@internal"
+    extra_hosts:
+      # https://github.com/containous/traefik/blob/master/pkg/version/version.go#L61
+      - "update.traefik.io:127.0.0.1"
+      # https://github.com/containous/traefik/blob/master/pkg/collector/collector.go#L20
+      - "collect.traefik.io:127.0.0.1"
+      - "stats.g.doubleclick.net:127.0.0.1"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider --proxy off localhost:8080/ping || exit 1"]
+      interval: 3s
+      retries: 12
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "1m"
+  test-nginx:
+    image: nginx:1.19.6-alpine
+    restart: unless-stopped
+    depends_on: 
+      - traefik
+    networks:
+      - traefik
+    command: >
+      /bin/sh -c "
+      echo \"<h1>HelloWorld!</h1>\" >> /public/index.html;
+      echo \"daemon off;\" >> /etc/nginx/nginx.conf;
+      echo \"server {
+            listen 80;
+            server_name localhost;
+            location = /favicon.ico {
+                empty_gif;
+            }
+            location / {
+                root /public;
+            }
+        }\" > /etc/nginx/conf.d/default.conf; nginx;
+      "
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik"
+      - "traefik.http.routers.certs_0.middlewares=https-redirect@file"
+      - "traefik.http.routers.certs_0.entrypoints=http"
+      - "traefik.http.routers.certs_0.rule=Host(`test.dev.io`)"
+      - "traefik.http.routers.certs_1.middlewares=content-compress@file"
+      - "traefik.http.routers.certs_1.entrypoints=https"
+      - "traefik.http.routers.certs_1.tls=true"
+      - "traefik.http.routers.certs_1.rule=Host(`test.dev.io`)"
+      - "traefik.http.services.certs_backend.loadbalancer.server.scheme=http"
+      - "traefik.http.services.certs_backend.loadbalancer.server.port=80"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "1m"
+networks:
+  traefik:
+    external: true

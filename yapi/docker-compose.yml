@@ -1,0 +1,44 @@
+version: "3.8"
+
+services:
+  yapi-web:
+    image: jayfong/yapi:latest
+    environment:
+      - YAPI_ADMIN_ACCOUNT=root@dev.io
+      - YAPI_ADMIN_PASSWORD=root
+      - YAPI_CLOSE_REGISTER=true
+      - YAPI_DB_SERVERNAME=yapi-mongo
+      - YAPI_DB_PORT=27017
+      - YAPI_DB_DATABASE=yapi
+      - YAPI_MAIL_ENABLE=false
+      - YAPI_LDAP_LOGIN_ENABLE=false
+      - YAPI_PLUGINS=[]
+    depends_on:
+      - yapi-mongo
+    networks:
+      - traefik
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik"
+      - "traefik.http.routers.yapi_0.middlewares=https-redirect@file"
+      - "traefik.http.routers.yapi_0.entrypoints=http"
+      - "traefik.http.routers.yapi_0.rule=Host(`yapi.dev.io`)"
+      - "traefik.http.routers.yapi_1.middlewares=content-compress@file"
+      - "traefik.http.routers.yapi_1.entrypoints=https"
+      - "traefik.http.routers.yapi_1.tls=true"
+      - "traefik.http.routers.yapi_1.rule=Host(`yapi.dev.io`)"
+      - "traefik.http.services.yapi_backend.loadbalancer.server.scheme=http"
+      - "traefik.http.services.yapi_backend.loadbalancer.server.port=3000"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "1m"
+  yapi-mongo:
+    image: mongo:latest
+    networks:
+      - traefik
+    restart: unless-stopped
+networks:
+  traefik:
+    external: true

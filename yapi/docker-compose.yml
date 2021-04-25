@@ -36,6 +36,8 @@ services:
         max-size: "1m"
   yapi-mongo:
     image: mongo:latest
+    volumes:
+      - ./data/db:/data/db
     networks:
       - traefik
     restart: unless-stopped

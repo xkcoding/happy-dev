@@ -4,8 +4,8 @@ services:
   yapi-web:
     image: jayfong/yapi:latest
     environment:
-      - YAPI_ADMIN_ACCOUNT=root@dev.io
-      - YAPI_ADMIN_PASSWORD=root
+      - YAPI_ADMIN_ACCOUNT=${YAPI_USER}
+      - YAPI_ADMIN_PASSWORD=${YAPI_PASS}
       - YAPI_CLOSE_REGISTER=true
       - YAPI_DB_SERVERNAME=yapi-mongo
       - YAPI_DB_PORT=27017
@@ -23,11 +23,11 @@ services:
       - "traefik.docker.network=traefik"
       - "traefik.http.routers.yapi_0.middlewares=https-redirect@file"
       - "traefik.http.routers.yapi_0.entrypoints=http"
-      - "traefik.http.routers.yapi_0.rule=Host(`yapi.dev.io`)"
+      - "traefik.http.routers.yapi_0.rule=Host(`${YAPI_DOMAIN}`)"
       - "traefik.http.routers.yapi_1.middlewares=content-compress@file"
       - "traefik.http.routers.yapi_1.entrypoints=https"
       - "traefik.http.routers.yapi_1.tls=true"
-      - "traefik.http.routers.yapi_1.rule=Host(`yapi.dev.io`)"
+      - "traefik.http.routers.yapi_1.rule=Host(`${YAPI_DOMAIN}`)"
       - "traefik.http.services.yapi_backend.loadbalancer.server.scheme=http"
       - "traefik.http.services.yapi_backend.loadbalancer.server.port=3000"
     logging:

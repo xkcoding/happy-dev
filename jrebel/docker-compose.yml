@@ -1,0 +1,27 @@
+version: "3.8"
+
+services:
+  jrebel:
+    image: pig4cloud/jrebel:latest
+    networks:
+      - traefik
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik"
+      - "traefik.http.routers.jrebel_0.middlewares=https-redirect@file"
+      - "traefik.http.routers.jrebel_0.entrypoints=http"
+      - "traefik.http.routers.jrebel_0.rule=Host(`jrebel.dev.io`)"
+      - "traefik.http.routers.jrebel_1.middlewares=content-compress@file"
+      - "traefik.http.routers.jrebel_1.entrypoints=https"
+      - "traefik.http.routers.jrebel_1.tls=true"
+      - "traefik.http.routers.jrebel_1.rule=Host(`jrebel.dev.io`)"
+      - "traefik.http.services.jrebel_backend.loadbalancer.server.scheme=http"
+      - "traefik.http.services.jrebel_backend.loadbalancer.server.port=8888"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "1m"
+networks:
+  traefik:
+    external: true

@@ -1,0 +1,28 @@
+version: "3.8"
+services:
+  dashboard:
+    image: rmountjoy/dashmachine:latest
+    restart: unless-stopped
+    networks:
+      - traefik
+    volumes:
+      - ./data:/dashmachine/dashmachine/user_data
+    labels:
+        - "traefik.enable=true"
+        - "traefik.docker.network=traefik"
+        - "traefik.http.routers.dashboard_0.middlewares=https-redirect@file"
+        - "traefik.http.routers.dashboard_0.entrypoints=http"
+        - "traefik.http.routers.dashboard_0.rule=Host(`${DASHBOARD_DOMAIN}`)"
+        - "traefik.http.routers.dashboard_1.middlewares=content-compress@file"
+        - "traefik.http.routers.dashboard_1.entrypoints=https"
+        - "traefik.http.routers.dashboard_1.tls=true"
+        - "traefik.http.routers.dashboard_1.rule=Host(`${DASHBOARD_DOMAIN}`)"
+        - "traefik.http.services.dashboard_backend.loadbalancer.server.scheme=http"
+        - "traefik.http.services.dashboard_backend.loadbalancer.server.port=5000"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "1m"
+networks:
+  traefik:
+    external: true

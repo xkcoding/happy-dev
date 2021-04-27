@@ -1,5 +1,6 @@
 dev.io.*
 .env
+dashboard/data/
 yapi/data/db/
-minio/data/.minio.sys/
+minio/data/
 .DS_Store

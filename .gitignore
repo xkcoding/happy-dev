@@ -2,3 +2,4 @@ dev.io.*
 .env
 yapi/data/db/
 minio/data/.minio.sys/
+.DS_Store

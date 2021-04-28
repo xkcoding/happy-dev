@@ -1,6 +1,6 @@
 dev.io.*
 .env
 dashboard/data/
-yapi/data/db/
+yapi/data/
 minio/data/
 .DS_Store

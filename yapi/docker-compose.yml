@@ -37,7 +37,7 @@ services:
   yapi-mongo:
     image: mongo:latest
     volumes:
-      - ./data/db:/data/db
+      - ./data:/data/db
     networks:
       - traefik
     restart: unless-stopped

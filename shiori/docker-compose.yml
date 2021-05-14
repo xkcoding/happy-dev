@@ -1,7 +1,7 @@
 version: "3.8"
 
 services:
-  minio:
+  shiori:
     image: soulteary/shiori:v2021.05.07.1
     volumes:
       - ./data:/srv/shiori/

@@ -3,4 +3,5 @@ dev.io.*
 dashboard/data/
 yapi/data/
 minio/data/
+shiori/data/
 .DS_Store

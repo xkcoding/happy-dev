@@ -1,0 +1,28 @@
+version: "3.8"
+
+services:
+  minio:
+    image: soulteary/shiori:v2021.05.07.1
+    volumes:
+      - ./data:/srv/shiori/
+    networks:
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik"
+      - "traefik.http.routers.shiori_0.middlewares=https-redirect@file"
+      - "traefik.http.routers.shiori_0.entrypoints=http"
+      - "traefik.http.routers.shiori_0.rule=Host(`${SHIORI_DOMAIN}`)"
+      - "traefik.http.routers.shiori_1.middlewares=content-compress@file"
+      - "traefik.http.routers.shiori_1.entrypoints=https"
+      - "traefik.http.routers.shiori_1.tls=true"
+      - "traefik.http.routers.shiori_1.rule=Host(`${SHIORI_DOMAIN}`)"
+      - "traefik.http.services.shiori_backend.loadbalancer.server.scheme=http"
+      - "traefik.http.services.shiori_backend.loadbalancer.server.port=8080"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "1m"
+networks:
+  traefik:
+    external: true

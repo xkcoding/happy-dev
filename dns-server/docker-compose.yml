@@ -2,30 +2,16 @@ version: "3.8"
 
 services:
   dns-server:
-    image: jpillora/dnsmasq:latest
-    ports:
-        - "53:53/udp"
-        # - 10008:8080
-    environment:
-      - HTTP_USER=root
-      - HTTP_PASS=root
-    volumes:
-      - ./config/dnsmasq.conf:/etc/dnsmasq.conf
+    image: soulteary/go-dnsmasq:test
     networks:
       - traefik
+    command: dnsmasq -l 0.0.0.0:53 -f /hosts.conf -p 1s -n 114.114.114.114:53 -n 8.8.8.8:53
+    ports:
+      - "53:53/udp"
+      - "53:53/tcp"
+    volumes:
+      - ./config/hosts.conf:/hosts.conf:rw
     restart: unless-stopped
-    labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=traefik"
-      - "traefik.http.routers.dns_0.middlewares=https-redirect@file"
-      - "traefik.http.routers.dns_0.entrypoints=http"
-      - "traefik.http.routers.dns_0.rule=Host(`dns.dev.io`)"
-      - "traefik.http.routers.dns_1.middlewares=content-compress@file"
-      - "traefik.http.routers.dns_1.entrypoints=https"
-      - "traefik.http.routers.dns_1.tls=true"
-      - "traefik.http.routers.dns_1.rule=Host(`dns.dev.io`)"
-      - "traefik.http.services.dns_backend.loadbalancer.server.scheme=http"
-      - "traefik.http.services.dns_backend.loadbalancer.server.port=8080"
     logging:
       driver: "json-file"
       options:
